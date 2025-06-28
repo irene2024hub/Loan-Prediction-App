@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diabetes Prediction</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+  }
+  .container {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+  h1 {
+    margin-bottom: 30px;
+    font-weight: 600;
+    color: #5a2a83;
+    letter-spacing: 1px;
+  }
+  form {
+    text-align: left;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+  }
+  input[type="number"]:focus {
+    border-color: #764ba2;
+    outline: none;
+  }
+  .button-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 15px;
+  }
+  button {
+    flex: 1;
+    padding: 12px 0;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  #predict-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
+  }
+  #predict-btn:hover {
+    background: linear-gradient(45deg, #5a6ce7, #613f8e);
+    box-shadow: 0 12px 20px rgba(90, 108, 231, 0.6);
+  }
+  #clear-btn {
+    background: #f44336;
+    box-shadow: 0 8px 15px rgba(244, 67, 54, 0.4);
+  }
+  #clear-btn:hover {
+    background: #d32f2f;
+    box-shadow: 0 12px 20px rgba(211, 47, 47, 0.6);
+  }
+  #loading {
+    margin-top: 18px;
+    font-style: italic;
+    color: #777;
+    display: none;
+  }
+  #result {
+    margin-top: 20px;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    display: none;
+    user-select: none;
+  }
+  #result.positive {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  #result.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  footer {
+    margin-top: 30px;
+    font-size: 14px;
+    color: #aaa;
+    font-style: italic;
+  }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    .container {
+      padding: 20px;
+    }
+    button {
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Diabetes Prediction</h1>
+
+    <form id="predict-form">
+      <label for="pregnancies">Pregnancies</label>
+      <input type="number" id="pregnancies" name="pregnancies" min="0" step="1" required />
+
+      <label for="glucose">Glucose</label>
+      <input type="number" id="glucose" name="glucose" min="0" step="any" required />
+
+      <label for="bloodpressure">Blood Pressure</label>
+      <input type="number" id="bloodpressure" name="bloodpressure" min="0" step="any" required />
+
+      <label for="skinthickness">Skin Thickness</label>
+      <input type="number" id="skinthickness" name="skinthickness" min="0" step="any" required />
+
+      <label for="insulin">Insulin</label>
+      <input type="number" id="insulin" name="insulin" min="0" step="any" required />
+
+      <label for="bmi">BMI</label>
+      <input type="number" id="bmi" name="bmi" min="0" step="any" required />
+
+      <label for="dpf">Diabetes Pedigree Function</label>
+      <input type="number" id="dpf" name="dpf" min="0" step="any" required />
+
+      <label for="age">Age</label>
+      <input type="number" id="age" name="age" min="0" step="1" required />
+
+      <div class="button-row">
+        <button type="submit" id="predict-btn">Predict</button>
+        <button type="button" id="clear-btn">Clear</button>
+      </div>
+    </form>
+
+    <div id="loading">Loading prediction...</div>
+    <div id="result"></div>
+
+    <footer>DSA 2025</footer>
+  </div>
+
+<script>
+  const form = document.getElementById('predict-form');
+  const loading = document.getElementById('loading');
+  const resultDiv = document.getElementById('result');
+  const clearBtn = document.getElementById('clear-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    resultDiv.style.display = 'none';
+    loading.style.display = 'block';
+
+    const features = [
+      Number(form.pregnancies.value),
+      Number(form.glucose.value),
+      Number(form.bloodpressure.value),
+      Number(form.skinthickness.value),
+      Number(form.insulin.value),
+      Number(form.bmi.value),
+      Number(form.dpf.value),
+      Number(form.age.value),
+    ];
+
+    if (features.some(isNaN)) {
+      loading.style.display = 'none';
+      resultDiv.style.display = 'block';
+      resultDiv.className = '';
+      resultDiv.style.color = 'red';
+      resultDiv.textContent = 'Please fill in all fields with valid numbers.';
+      return;
+    }
+
+    try {
+      const response = await fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features})
+      });
+
+      loading.style.display = 'none';
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        resultDiv.className = '';
+        resultDiv.style.color = 'red';
+        resultDiv.textContent = 'Error: ' + (errorData.error || 'Unknown error');
+      } else {
+        const data = await response.json();
+        if (data.prediction === 'DIABETIC') {
+          resultDiv.className = 'negative';
+        } else {
+          resultDiv.className = 'positive';
+        }
+        resultDiv.textContent = `Prediction: ${data.prediction} (Probability: ${data.probability})`;
+      }
+      resultDiv.style.display = 'block';
+
+    } catch (err) {
+      loading.style.display = 'none';
+      resultDiv.className = '';
+      resultDiv.style.color = 'red';
+      resultDiv.textContent = 'Failed to fetch prediction. Try again later.';
+      resultDiv.style.display = 'block';
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    form.reset();
+    resultDiv.style.display = 'none';
+  });
+</script>
+</body>
+</html>
